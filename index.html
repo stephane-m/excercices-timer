@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Coach Perso</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Timer Excercices</title>
     <style>
         body { margin: 0; font-family: sans-serif; transition: background 0.5s; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: white; }
         #app { width: 100%; padding: 20px; }
@@ -12,9 +12,23 @@
         #infos { font-size: 1.5rem; opacity: 0.9; }
         button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; background: white; color: #333; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .hidden { display: none; }
+        #liste-programmes {
+            display: flex;
+            flex-direction: column; /* Aligne les boutons verticalement */
+            gap: 15px;              /* Ajoute un espace de 15px entre chaque bouton */
+            max-width: 300px;       /* Optionnel : limite la largeur des boutons */
+            margin: 0 auto;         /* Centre le bloc de boutons */
+        }
+        #liste-programmes button {
+            width: 100%;            /* Force le bouton à prendre toute la largeur du conteneur */
+            display: block;         /* S'assure que le bouton se comporte comme un bloc */
+        }
     </style>
 </head>
 <body>
+    <div id="progress-container" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 30px; background: rgba(0,0,0,0.2);">
+        <div id="progress-bar" style="width: 100%; height: 100%; background: white; transition: width 1s linear;"></div>
+    </div>
     <div id="app">
         <div id="menu">
             <h2 style="color: #333">Mes Programmes</h2>

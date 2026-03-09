@@ -3,12 +3,43 @@
     {
       "id": "dos-01",
       "titre": "Exercices Dos",
-      "repetitions": 5,
-      "etapes": [
-        { "nom": "Échauffement", "duree": 5, "couleur": "#3498db" },
-        { "nom": "Bras droit", "duree": 10, "couleur": "#e67e22" },
-        { "nom": "Changement", "duree": 3, "couleur": "#95a5a6" },
-        { "nom": "Bras gauche", "duree": 10, "couleur": "#e67e22" }
+      "structure": [
+        { "type": "unique", "nom": "Échauffement", "duree": 5, "couleur": "#3498db" },
+        {
+          "type": "boucle",
+          "repetitions": 5,
+          "etapes": [
+            { "nom": "Bras droit", "duree": 10, "couleur": "#e67e22" },
+            { "nom": "Changement", "duree": 3, "couleur": "#95a5a6" },
+            { "nom": "Bras gauche", "duree": 10, "couleur": "#e67e22" },
+            { "nom": "Changement", "duree": 3, "couleur": "#95a5a6" }
+          ]
+        },
+        { "type": "unique", "nom": "Grande Pause", "duree": 30, "couleur": "#2ecc71" },
+        {
+          "type": "boucle",
+          "repetitions": 5,
+          "etapes": [
+            { "nom": "Bras droit", "duree": 10, "couleur": "#e67e22" },
+            { "nom": "Changement", "duree": 3, "couleur": "#95a5a6" },
+            { "nom": "Bras gauche", "duree": 10, "couleur": "#e67e22" },
+            { "nom": "Changement", "duree": 3, "couleur": "#95a5a6" }
+          ]
+        }
+      ]
+    },{
+      "id": "dos-02",
+      "titre": "Excercices test",
+      "structure": [
+        { "type": "unique", "nom": "preparation", "duree": 3, "couleur": "#3498db" },
+        {
+          "type": "boucle",
+          "repetitions": 2,
+          "etapes": [
+            { "nom": "XX", "duree": 2, "couleur": "#e67e22" },
+            { "nom": "YY", "duree": 3, "couleur": "#95a5a6" }
+          ]
+        }
       ]
     }
   ]
