@@ -1,0 +1,15 @@
+{
+  "programmes": [
+    {
+      "id": "dos-01",
+      "titre": "Exercices Dos",
+      "repetitions": 5,
+      "etapes": [
+        { "nom": "Échauffement", "duree": 5, "couleur": "#3498db" },
+        { "nom": "Bras droit", "duree": 10, "couleur": "#e67e22" },
+        { "nom": "Changement", "duree": 3, "couleur": "#95a5a6" },
+        { "nom": "Bras gauche", "duree": 10, "couleur": "#e67e22" }
+      ]
+    }
+  ]
+}

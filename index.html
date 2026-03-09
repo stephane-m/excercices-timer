@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Coach Perso</title>
+    <style>
+        body { margin: 0; font-family: sans-serif; transition: background 0.5s; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: white; }
+        #app { width: 100%; padding: 20px; }
+        h1 { font-size: 3rem; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        #timer { font-size: 8rem; font-weight: bold; margin: 20px 0; }
+        #infos { font-size: 1.5rem; opacity: 0.9; }
+        button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; background: white; color: #333; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="menu">
+            <h2 style="color: #333">Mes Programmes</h2>
+            <div id="liste-programmes"></div>
+        </div>
+        
+        <div id="entrainement" class="hidden">
+            <h1 id="titre-etape">Prêt ?</h1>
+            <div id="timer">00</div>
+            <div id="infos"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
