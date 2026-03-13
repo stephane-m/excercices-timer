@@ -38,7 +38,8 @@
           "etapes": [
             { "nom": "Côté droit",  "duree": 30, "couleur": "#e67e22" },
             { "nom": "Changement",  "duree": 5,  "couleur": "#95a5a6" },
-            { "nom": "Côté gauche", "duree": 30, "couleur": "#e67e22" }
+            { "nom": "Côté gauche", "duree": 30, "couleur": "#e67e22" },
+            { "nom": "Changement",  "duree": 5,  "couleur": "#95a5a6" }
           ]
         }
       ]

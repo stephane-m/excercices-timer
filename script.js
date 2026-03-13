@@ -20,7 +20,30 @@ function afficherMenu() {
     });
 }
 
+let wakeLock = null;
+
+async function maintenirEcranAllume() {
+    try {
+        // Demande au navigateur de garder l'écran actif
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log("L'écran restera allumé !");
+            
+            // Si l'onglet est réduit puis réouvert, on doit redemander le lock
+            document.addEventListener('visibilitychange', async () => {
+                if (wakeLock !== null && document.visibilityState === 'visible') {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            });
+        }
+    } catch (err) {
+        console.error(`Erreur Wake Lock: ${err.name}, ${err.message}`);
+    }
+}
+
 function preparerEtDemarrer(p) {
+    maintenirEcranAllume();
+
     fileAttente = [];
     indexActuel = 0;
 
@@ -44,6 +67,13 @@ function preparerEtDemarrer(p) {
 
 function executerEtape() {
     if (indexActuel >= fileAttente.length) {
+        // --- NOUVEAU : On relâche le verrou d'écran ---
+        if (wakeLock !== null) {
+            wakeLock.release().then(() => {
+                wakeLock = null;
+            });
+        }
+        
         alert("Séance terminée ! Bravo !");
         location.reload();
         return;
