@@ -43,6 +43,14 @@
           ]
         }
       ]
+    },{
+      "id": "minute-01",
+      "titre": "Une minute en deux fois",
+      "structure": [
+        { "type": "unique", "nom": "preparation", "duree": 5,  "couleur": "#3498db" },
+        { "type": "unique", "nom": "30 secondes", "duree": 30, "couleur": "#e67e22" },
+        { "type": "unique", "nom": "30 secondes", "duree": 30, "couleur": "#e67e22" }
+      ]
     }
   ]
 }
