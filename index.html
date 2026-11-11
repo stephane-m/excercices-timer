@@ -10,6 +10,7 @@
         h1 { font-size: 3rem; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         #timer { font-size: 8rem; font-weight: bold; margin: 20px 0; }
         #infos { font-size: 1.5rem; opacity: 0.9; }
+        #commandes { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
         button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; background: white; color: #333; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .hidden { display: none; }
         #liste-programmes {
@@ -39,6 +40,10 @@
             <h1 id="titre-etape">Prêt ?</h1>
             <div id="timer">00</div>
             <div id="infos"></div>
+            <div id="commandes">
+                <button id="pause" type="button">Pause</button>
+                <button id="accueil" type="button">Retour à l’accueil</button>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
