@@ -2,6 +2,10 @@
 
 Exercise Timer is a mobile-friendly web app for building and running timed routines for stretching, workouts, and other exercises. The interface is in French.
 
+## Access the app online
+
+App page can be loaded at https://stephane-m.github.io/excercices-timer/ 
+
 ## Using the app
 
 - Select **Nouveau programme** to create a routine, or **Modifier** to edit an existing one. A routine can contain one-off steps and groups of steps that repeat a set number of times. Each step has a name, a duration in seconds, and a background color.
