@@ -1,6 +1,12 @@
 let programmes = [];
 let fileAttente = []; // Liste plate de toutes les étapes à venir
 let indexActuel = 0;
+let intervalle = null;
+let tempsRestant = 0;
+
+const boutonPause = document.getElementById('pause');
+boutonPause.onclick = basculerPause;
+document.getElementById('accueil').onclick = retournerAccueil;
 
 fetch('exercices.json')
     .then(res => res.json())
@@ -67,15 +73,8 @@ function preparerEtDemarrer(p) {
 
 function executerEtape() {
     if (indexActuel >= fileAttente.length) {
-        // --- NOUVEAU : On relâche le verrou d'écran ---
-        if (wakeLock !== null) {
-            wakeLock.release().then(() => {
-                wakeLock = null;
-            });
-        }
-        
         alert("Séance terminée ! Bravo !");
-        location.reload();
+        retournerAccueil();
         return;
     }
 
@@ -93,14 +92,20 @@ function executerEtape() {
     titre.innerText = etape.nom;
     infos.innerText = etape.cycleInfo || "";
 
-    let tempsTotal = etape.duree;
-    let tempsRestant = etape.duree;
+    tempsRestant = etape.duree;
     
     // Initialisation de la barre à 100%
     progressBar.style.width = "100%";
     display.innerText = tempsRestant;
+    lancerCompteARebours();
+}
 
-    const interval = setInterval(() => {
+function lancerCompteARebours() {
+    const display = document.getElementById('timer');
+    const progressBar = document.getElementById('progress-bar');
+    const tempsTotal = fileAttente[indexActuel].duree;
+
+    intervalle = setInterval(() => {
         tempsRestant--;
         display.innerText = tempsRestant;
 
@@ -113,12 +118,36 @@ function executerEtape() {
         }
         
         if (tempsRestant <= 0) {
-            clearInterval(interval);
+            arreterCompteARebours();
             emettreBip(880, 0.3);
             indexActuel++;
             executerEtape();
         }
     }, 1000);
+}
+
+function arreterCompteARebours() {
+    clearInterval(intervalle);
+    intervalle = null;
+}
+
+function basculerPause() {
+    if (intervalle === null) {
+        lancerCompteARebours();
+        boutonPause.innerText = "Pause";
+    } else {
+        arreterCompteARebours();
+        boutonPause.innerText = "Reprendre";
+    }
+}
+
+function retournerAccueil() {
+    arreterCompteARebours();
+    if (wakeLock !== null) {
+        wakeLock.release();
+        wakeLock = null;
+    }
+    location.reload();
 }
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
