@@ -1,4 +1,13 @@
-let programmes = [];
+const cleProgrammes = 'exercice-timer.programmes';
+let programmesPreenregistres = [];
+const menu = document.getElementById('menu');
+const editeur = document.getElementById('editeur');
+const formulaire = document.getElementById('formulaire-programme');
+const blocs = document.getElementById('blocs');
+const messageMenu = document.getElementById('message-menu');
+const messageEditeur = document.getElementById('message-editeur');
+const boutonNouveau = document.getElementById('nouveau-programme');
+let programmeEdite = null;
 let fileAttente = []; // Liste plate de toutes les étapes à venir
 let indexActuel = 0;
 let intervalle = null;
@@ -8,22 +17,174 @@ const boutonPause = document.getElementById('pause');
 boutonPause.onclick = basculerPause;
 document.getElementById('accueil').onclick = retournerAccueil;
 
-fetch('exercices.json')
-    .then(res => res.json())
-    .then(data => {
-        programmes = data.programmes;
-        afficherMenu();
-    });
+boutonNouveau.onclick = () => ouvrirEditeur();
+document.getElementById('annuler-edition').onclick = fermerEditeur;
+document.getElementById('ajouter-etape').onclick = () => ajouterEtape(blocs).focus();
+document.getElementById('ajouter-boucle').onclick = () => ajouterBoucle().focus();
+formulaire.onsubmit = enregistrerProgramme;
+
+initialiserProgrammes();
+
+async function initialiserProgrammes() {
+    try {
+        const reponse = await fetch('exercices.json');
+        if (!reponse.ok) throw new Error('Chargement des programmes impossible');
+        const donnees = await reponse.json();
+        programmesPreenregistres = donnees.programmes;
+    } catch {
+        messageMenu.textContent = 'Les programmes préenregistrés sont indisponibles.';
+    }
+    afficherMenu();
+    boutonNouveau.disabled = false;
+}
+
+function lireProgrammesLocaux() {
+    return JSON.parse(localStorage.getItem(cleProgrammes) ?? '[]');
+}
+
+function sauvegarderProgrammeLocal(programme) {
+    const programmes = new Map(lireProgrammesLocaux().map(p => [p.id, p]));
+    programmes.set(programme.id, programme);
+    localStorage.setItem(cleProgrammes, JSON.stringify([...programmes.values()]));
+}
 
 function afficherMenu() {
     const liste = document.getElementById('liste-programmes');
-    liste.innerHTML = ""; 
+    const programmes = new Map(programmesPreenregistres.map(p => [p.id, p]));
+    try {
+        lireProgrammesLocaux().forEach(p => {
+            if (p.supprime) programmes.delete(p.id);
+            else programmes.set(p.id, p);
+        });
+    } catch {
+        messageMenu.textContent = 'Les programmes enregistrés sur cet appareil sont inaccessibles.';
+    }
+    liste.replaceChildren();
     programmes.forEach(p => {
-        const btn = document.createElement('button');
-        btn.innerText = p.titre;
-        btn.onclick = () => preparerEtDemarrer(p);
-        liste.appendChild(btn);
+        const carte = document.createElement('article');
+        carte.className = 'programme';
+        const titre = document.createElement('h2');
+        titre.textContent = p.titre;
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        const demarrer = document.createElement('button');
+        demarrer.type = 'button';
+        demarrer.className = 'principal';
+        demarrer.textContent = 'Démarrer';
+        demarrer.onclick = () => preparerEtDemarrer(p);
+        const modifier = document.createElement('button');
+        modifier.type = 'button';
+        modifier.textContent = 'Modifier';
+        modifier.onclick = () => ouvrirEditeur(p);
+        const supprimer = document.createElement('button');
+        supprimer.type = 'button';
+        supprimer.className = 'danger';
+        supprimer.textContent = 'Supprimer';
+        supprimer.setAttribute('aria-label', `Supprimer le programme ${p.titre}`);
+        supprimer.onclick = () => supprimerProgramme(p);
+        actions.append(demarrer, modifier, supprimer);
+        carte.append(titre, actions);
+        liste.append(carte);
     });
+}
+
+function supprimerProgramme(programme) {
+    if (!confirm(`Supprimer le programme « ${programme.titre} » ?`)) return;
+    try {
+        // L’identifiant seul suffit à empêcher un programme fourni de réapparaître.
+        sauvegarderProgrammeLocal({ id: programme.id, supprime: true });
+    } catch {
+        messageMenu.textContent = 'Suppression impossible. Vérifie que le navigateur autorise le stockage local.';
+        return;
+    }
+    messageMenu.textContent = '';
+    afficherMenu();
+    boutonNouveau.focus();
+}
+
+function ouvrirEditeur(programme = null) {
+    programmeEdite = programme;
+    document.getElementById('titre-editeur').textContent = programme ? 'Modifier le programme' : 'Nouveau programme';
+    formulaire.elements.titre.value = programme?.titre ?? '';
+    blocs.replaceChildren();
+    messageEditeur.textContent = '';
+    if (programme) {
+        programme.structure.forEach(bloc => {
+            if (bloc.type === 'boucle') ajouterBoucle(bloc);
+            else ajouterEtape(blocs, bloc);
+        });
+    } else {
+        ajouterEtape(blocs);
+    }
+    menu.classList.add('hidden');
+    editeur.classList.remove('hidden');
+    window.scrollTo(0, 0);
+}
+
+function fermerEditeur() {
+    editeur.classList.add('hidden');
+    menu.classList.remove('hidden');
+    window.scrollTo(0, 0);
+}
+
+function ajouterEtape(conteneur, etape = {}) {
+    const bloc = document.getElementById('modele-etape').content.firstElementChild.cloneNode(true);
+    const nom = bloc.querySelector('[name="nom"]');
+    nom.value = etape.nom ?? '';
+    bloc.querySelector('[name="duree"]').value = etape.duree ?? 30;
+    bloc.querySelector('[name="couleur"]').value = etape.couleur ?? '#e67e22';
+    bloc.querySelector('.supprimer').onclick = () => bloc.remove();
+    conteneur.append(bloc);
+    return nom;
+}
+
+function ajouterBoucle(boucle = { repetitions: 2, etapes: [{}] }) {
+    const bloc = document.getElementById('modele-boucle').content.firstElementChild.cloneNode(true);
+    const repetitions = bloc.querySelector('[name="repetitions"]');
+    const etapes = bloc.querySelector('.etapes');
+    repetitions.value = boucle.repetitions;
+    boucle.etapes.forEach(etape => ajouterEtape(etapes, etape));
+    bloc.querySelector('.ajouter').onclick = () => ajouterEtape(etapes).focus();
+    bloc.querySelector('.supprimer-boucle').onclick = () => bloc.remove();
+    blocs.append(bloc);
+    return repetitions;
+}
+
+function lireEtape(bloc) {
+    const nom = bloc.querySelector('[name="nom"]').value.trim();
+    const duree = bloc.querySelector('[name="duree"]').valueAsNumber;
+    const couleur = bloc.querySelector('[name="couleur"]').value;
+    return { nom, duree, couleur };
+}
+
+function enregistrerProgramme(evenement) {
+    evenement.preventDefault();
+    const titre = formulaire.elements.titre.value.trim();
+    const structure = Array.from(blocs.children, bloc => {
+        if (bloc.classList.contains('boucle')) {
+            return {
+                type: 'boucle',
+                repetitions: bloc.querySelector('[name="repetitions"]').valueAsNumber,
+                etapes: Array.from(bloc.querySelector('.etapes').children, lireEtape)
+            };
+        }
+        return { type: 'unique', ...lireEtape(bloc) };
+    });
+    if (!titre || !structure.length || structure.some(bloc =>
+        bloc.type === 'boucle' ? !bloc.etapes.length || bloc.etapes.some(etape => !etape.nom) : !bloc.nom
+    )) {
+        messageEditeur.textContent = 'Donne un nom au programme et à chaque étape, et ajoute au moins une étape par programme et par série.';
+        return;
+    }
+    try {
+        const id = programmeEdite?.id ?? `perso-${Array.from(crypto.getRandomValues(new Uint32Array(4))).join('-')}`;
+        sauvegarderProgrammeLocal({ id, titre, structure });
+    } catch {
+        messageEditeur.textContent = 'Enregistrement impossible. Vérifie que le navigateur autorise le stockage local.';
+        return;
+    }
+    afficherMenu();
+    fermerEditeur();
 }
 
 let wakeLock = null;

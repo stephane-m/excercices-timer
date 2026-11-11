@@ -2,28 +2,39 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timer Excercices</title>
     <style>
-        body { margin: 0; font-family: sans-serif; transition: background 0.5s; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: white; }
-        #app { width: 100%; padding: 20px; }
+        body { margin: 0; font-family: "DM Sans", system-ui, sans-serif; background: #f1f5f4; transition: background 0.5s; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; color: white; }
+        #app { box-sizing: border-box; width: 100%; padding: 48px 16px 24px; }
         h1 { font-size: 3rem; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         #timer { font-size: 8rem; font-weight: bold; margin: 20px 0; }
         #infos { font-size: 1.5rem; opacity: 0.9; }
         #commandes { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
         button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; background: white; color: #333; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .hidden { display: none; }
-        #liste-programmes {
-            display: flex;
-            flex-direction: column; /* Aligne les boutons verticalement */
-            gap: 15px;              /* Ajoute un espace de 15px entre chaque bouton */
-            max-width: 300px;       /* Optionnel : limite la largeur des boutons */
-            margin: 0 auto;         /* Centre le bloc de boutons */
-        }
-        #liste-programmes button {
-            width: 100%;            /* Force le bouton à prendre toute la largeur du conteneur */
-            display: block;         /* S'assure que le bouton se comporte comme un bloc */
-        }
+        #menu, #editeur { max-width: 38rem; margin: 0 auto; color: #172b27; text-align: left; }
+        #menu h1, #editeur h1 { font-size: 2rem; margin: 0 0 20px; text-shadow: none; }
+        #liste-programmes, #blocs, .etapes { display: grid; gap: 12px; }
+        .programme, .bloc { background: #fff; border: 1px solid #cbd9d6; border-radius: 14px; padding: 14px; }
+        .programme h2 { font-size: 1.1rem; margin: 0 0 10px; overflow-wrap: anywhere; }
+        .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        #menu button, #editeur button { padding: 9px 14px; min-height: 44px; border-radius: 8px; font-size: 1rem; box-shadow: none; border: 1px solid #b6c8c4; color: #174238; }
+        #menu .principal, #editeur .principal { background: #174d40; border-color: #174d40; color: white; }
+        #menu .programme .principal { flex: 0 0 100%; min-height: 68px; font-size: 1.4rem; }
+        #menu .programme button:not(.principal) { padding: 6px 10px; font-size: 0.85rem; }
+        #menu .danger { color: #852c20; border-color: #d8aaa3; }
+        #nouveau-programme { margin-bottom: 16px; }
+        #editeur label { display: grid; gap: 5px; font-weight: 600; min-width: 0; }
+        #editeur input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid #96ada7; border-radius: 7px; background: white; color: inherit; font: inherit; }
+        #editeur input[type="color"] { padding: 4px; }
+        #blocs { margin-top: 16px; }
+        #editeur fieldset { min-width: 0; margin: 0; }
+        #editeur legend { font-weight: 700; padding: 0 5px; }
+        .etapes { margin-top: 12px; }
+        .etapes .bloc { background: #f1f5f4; }
+        .parametres-etape { display: grid; gap: 8px; margin-top: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .message { color: #852c20; }
     </style>
 </head>
 <body>
@@ -32,9 +43,29 @@
     </div>
     <div id="app">
         <div id="menu">
-            <h2 style="color: #333">Mes Programmes</h2>
+            <h1>Mes programmes</h1>
+            <button id="nouveau-programme" class="principal" type="button" disabled>Nouveau programme</button>
+            <p id="message-menu" class="message" role="status"></p>
             <div id="liste-programmes"></div>
         </div>
+        <section id="editeur" class="hidden" aria-labelledby="titre-editeur">
+            <h1 id="titre-editeur"></h1>
+            <form id="formulaire-programme">
+                <label>Nom du programme
+                    <input name="titre" required>
+                </label>
+                <div id="blocs"></div>
+                <div class="actions">
+                    <button id="ajouter-etape" type="button">Ajouter une étape</button>
+                    <button id="ajouter-boucle" type="button">Ajouter une série</button>
+                </div>
+                <p id="message-editeur" class="message" role="alert"></p>
+                <div class="actions">
+                    <button class="principal" type="submit">Enregistrer</button>
+                    <button id="annuler-edition" type="button">Annuler</button>
+                </div>
+            </form>
+        </section>
         
         <div id="entrainement" class="hidden">
             <h1 id="titre-etape">Prêt ?</h1>
@@ -46,6 +77,38 @@
             </div>
         </div>
     </div>
+    <template id="modele-etape">
+        <fieldset class="bloc etape">
+            <legend>Étape</legend>
+            <label>Nom de l’étape
+                <input name="nom" required>
+            </label>
+            <div class="parametres-etape">
+                <label>Durée (secondes)
+                    <input name="duree" type="number" min="1" step="1" required>
+                </label>
+                <label>Couleur
+                    <input name="couleur" type="color">
+                </label>
+            </div>
+            <div class="actions">
+                <button class="supprimer" type="button">Retirer l’étape</button>
+            </div>
+        </fieldset>
+    </template>
+    <template id="modele-boucle">
+        <fieldset class="bloc boucle">
+            <legend>Série répétée</legend>
+            <label>Nombre de répétitions
+                <input name="repetitions" type="number" min="1" max="1000" step="1" required>
+            </label>
+            <div class="etapes"></div>
+            <div class="actions">
+                <button class="ajouter" type="button">Ajouter une étape à la série</button>
+                <button class="supprimer-boucle" type="button">Retirer la série</button>
+            </div>
+        </fieldset>
+    </template>
     <script src="script.js"></script>
 </body>
 </html>
