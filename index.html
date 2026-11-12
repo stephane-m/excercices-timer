@@ -69,6 +69,12 @@
         #menu .principal, #editeur .principal { background: var(--accent); border-color: var(--accent); color: var(--sur-accent); }
         #menu .programme .principal { flex: 0 0 100%; min-height: 68px; font-size: 1.4rem; }
         #menu .programme button:not(.principal) { padding: 6px 10px; font-size: 0.85rem; }
+        .en-tete-programme { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+        #menu .programme .poignee-programme { flex: 0 0 auto; min-width: 44px; font-size: 1.25rem; touch-action: none; cursor: grab; user-select: none; }
+        #menu .poignee-programme:active { cursor: grabbing; }
+        .programme.deplacement { opacity: 0.65; }
+        .programme.depot-avant { box-shadow: 0 -4px var(--accent); }
+        .programme.depot-apres { box-shadow: 0 4px var(--accent); }
         #menu .danger { color: var(--danger); border-color: var(--bordure); }
         .choix-theme { display: grid; gap: 5px; margin-top: 20px; width: fit-content; max-width: 100%; font-weight: 600; }
         #theme { min-height: 44px; max-width: 100%; padding: 8px; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--bordure); border-radius: 8px; }

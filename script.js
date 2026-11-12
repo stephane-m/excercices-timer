@@ -1,4 +1,5 @@
 const cleProgrammes = 'exercice-timer.programmes';
+const cleOrdreProgrammes = 'exercice-timer.ordre-programmes';
 const cleTheme = 'exercice-timer.theme';
 let programmesPreenregistres = [];
 const menu = document.getElementById('menu');
@@ -110,7 +111,19 @@ function programmesDisponibles(locaux) {
     return programmes;
 }
 
-function afficherMenu() {
+function ordonnerProgrammes(programmes) {
+    const ordre = new Set();
+    try {
+        const sauvegarde = JSON.parse(localStorage.getItem(cleOrdreProgrammes) ?? '[]');
+        if (Array.isArray(sauvegarde)) sauvegarde.forEach(id => ordre.add(id));
+    } catch {
+        // Utiliser l’ordre par défaut si la préférence est inaccessible.
+    }
+    programmes.forEach(p => ordre.add(p.id));
+    return [...ordre].filter(id => programmes.has(id));
+}
+
+function afficherMenu(focusOrdre) {
     const liste = document.getElementById('liste-programmes');
     let programmes;
     try {
@@ -121,11 +134,16 @@ function afficherMenu() {
     }
     boutonExporter.disabled = programmes.size === 0;
     liste.replaceChildren();
-    programmes.forEach(p => {
+    const ordre = ordonnerProgrammes(programmes);
+    ordre.forEach((id, index) => {
+        const p = programmes.get(id);
         const carte = document.createElement('article');
         carte.className = 'programme';
+        const entete = document.createElement('div');
+        entete.className = 'en-tete-programme';
         const titre = document.createElement('h2');
         titre.textContent = p.titre;
+        entete.append(titre);
         const duree = document.createElement('p');
         duree.className = 'duree-programme';
         duree.textContent = `Durée totale · ${formaterDuree(dureeProgramme(p))}`;
@@ -147,9 +165,98 @@ function afficherMenu() {
         supprimer.setAttribute('aria-label', `Supprimer le programme ${p.titre}`);
         supprimer.onclick = () => supprimerProgramme(p);
         actions.append(demarrer, modifier, supprimer);
-        carte.append(titre, duree, actions);
+        if (ordre.length > 1) {
+            const poignee = document.createElement('button');
+            poignee.type = 'button';
+            poignee.className = 'poignee-programme';
+            poignee.textContent = '↕';
+            poignee.setAttribute('aria-label', `Déplacer ${p.titre} · position ${index + 1} sur ${ordre.length}`);
+            poignee.setAttribute('aria-description', 'Fais glisser la poignée ou utilise les flèches haut et bas.');
+            configurerPoignee(poignee, carte, liste, ordre, index);
+            entete.append(poignee);
+        }
+        carte.append(entete, duree, actions);
         liste.append(carte);
+        if (focusOrdre === id) entete.querySelector('.poignee-programme')?.focus();
     });
+}
+
+function configurerPoignee(poignee, carte, liste, ordre, index) {
+    let pointeur = null;
+    let animation;
+    let positionY;
+    let destination = index;
+    let repere;
+    const autresCartes = () => Array.from(liste.children).filter(element => element !== carte);
+
+    function actualiserDestination() {
+        repere?.classList.remove('depot-avant', 'depot-apres');
+        const cartes = autresCartes();
+        destination = cartes.findIndex(element => {
+            const rect = element.getBoundingClientRect();
+            return positionY < rect.top + rect.height / 2;
+        });
+        if (destination === -1) destination = cartes.length;
+        repere = destination === index ? null : cartes[destination] ?? cartes.at(-1);
+        repere?.classList.add(destination === cartes.length ? 'depot-apres' : 'depot-avant');
+    }
+
+    function defiler() {
+        const marge = 64;
+        if (positionY < marge) window.scrollBy(0, -10);
+        else if (positionY > window.innerHeight - marge) window.scrollBy(0, 10);
+        actualiserDestination();
+        animation = requestAnimationFrame(defiler);
+    }
+
+    function terminer() {
+        pointeur = null;
+        cancelAnimationFrame(animation);
+        carte.classList.remove('deplacement');
+        repere?.classList.remove('depot-avant', 'depot-apres');
+    }
+
+    poignee.onpointerdown = evenement => {
+        if (!evenement.isPrimary || evenement.button !== 0) return;
+        pointeur = evenement.pointerId;
+        positionY = evenement.clientY;
+        poignee.setPointerCapture(pointeur);
+        carte.classList.add('deplacement');
+        animation = requestAnimationFrame(defiler);
+    };
+    poignee.onpointermove = evenement => {
+        if (evenement.pointerId === pointeur) positionY = evenement.clientY;
+    };
+    poignee.onpointerup = evenement => {
+        if (evenement.pointerId !== pointeur) return;
+        positionY = evenement.clientY;
+        actualiserDestination();
+        terminer();
+        deplacerProgramme(ordre, index, destination);
+    };
+    poignee.onlostpointercapture = evenement => {
+        if (evenement.pointerId === pointeur) terminer();
+    };
+    poignee.onkeydown = evenement => {
+        if (evenement.key !== 'ArrowUp' && evenement.key !== 'ArrowDown') return;
+        evenement.preventDefault();
+        deplacerProgramme(ordre, index, index + (evenement.key === 'ArrowUp' ? -1 : 1), true);
+    };
+}
+
+function deplacerProgramme(ordre, index, destination, garderFocus = false) {
+    if (destination === index || destination < 0 || destination >= ordre.length) return;
+    const nouvelOrdre = [...ordre];
+    const [id] = nouvelOrdre.splice(index, 1);
+    nouvelOrdre.splice(destination, 0, id);
+    try {
+        localStorage.setItem(cleOrdreProgrammes, JSON.stringify(nouvelOrdre));
+    } catch {
+        messageMenu.textContent = 'Impossible d’enregistrer le nouvel ordre des programmes.';
+        return;
+    }
+    messageMenu.textContent = '';
+    afficherMenu(garderFocus ? id : undefined);
 }
 
 function exporterProgrammes() {
