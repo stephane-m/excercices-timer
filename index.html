@@ -52,6 +52,9 @@
         h1 { font-size: 3rem; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         #timer { font-size: 8rem; font-weight: bold; margin: 20px 0; }
         #infos { font-size: 1.5rem; opacity: 0.9; }
+        .infos-seance { display: grid; gap: 6px; margin: 12px auto 0; max-width: 30rem; padding: 10px 14px; border-radius: 10px; background: #202020; color: white; overflow-wrap: anywhere; }
+        .infos-seance p { margin: 0; }
+        #temps-programme { font-variant-numeric: tabular-nums; }
         #commandes { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
         button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; background: white; color: #333; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .hidden { display: none; }
@@ -70,6 +73,7 @@
         .choix-theme { display: grid; gap: 5px; margin-top: 20px; width: fit-content; max-width: 100%; font-weight: 600; }
         #theme { min-height: 44px; max-width: 100%; padding: 8px; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--bordure); border-radius: 8px; }
         #message-theme:empty { display: none; }
+        #message-transfert:empty { display: none; }
         #nouveau-programme { margin-bottom: 16px; }
         #editeur label { display: grid; gap: 5px; font-weight: 600; min-width: 0; }
         #editeur input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--bordure); border-radius: 7px; background: var(--surface); color: inherit; font: inherit; }
@@ -94,6 +98,12 @@
             <button id="nouveau-programme" class="principal" type="button" disabled>Nouveau programme</button>
             <p id="message-menu" class="message" role="status"></p>
             <div id="liste-programmes"></div>
+            <div class="actions">
+                <button id="exporter-programmes" type="button" disabled>Exporter les programmes</button>
+                <button id="importer-programmes" type="button" disabled>Importer des programmes</button>
+                <input id="fichier-programmes" type="file" accept=".json,application/json" hidden>
+            </div>
+            <p id="message-transfert" role="status"></p>
             <label class="choix-theme">Thème
                 <select id="theme">
                     <option value="agrumes">Agrumes · clair</option>
@@ -128,6 +138,10 @@
             <h1 id="titre-etape">Prêt ?</h1>
             <div id="timer">00</div>
             <div id="infos"></div>
+            <div class="infos-seance">
+                <p id="etape-suivante" aria-live="polite"></p>
+                <p>Temps restant de la séance <strong id="temps-programme"></strong></p>
+            </div>
             <div id="commandes">
                 <button id="pause" type="button">Pause</button>
                 <button id="accueil" type="button">Retour à l’accueil</button>

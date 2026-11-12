@@ -8,11 +8,17 @@ const blocs = document.getElementById('blocs');
 const messageMenu = document.getElementById('message-menu');
 const messageEditeur = document.getElementById('message-editeur');
 const boutonNouveau = document.getElementById('nouveau-programme');
+const boutonExporter = document.getElementById('exporter-programmes');
+const boutonImporter = document.getElementById('importer-programmes');
+const fichierProgrammes = document.getElementById('fichier-programmes');
+const messageTransfert = document.getElementById('message-transfert');
 let programmeEdite = null;
 let fileAttente = []; // Liste plate de toutes les étapes à venir
 let indexActuel = 0;
 let intervalle = null;
 let tempsRestant = 0;
+let tempsProgrammeRestant = 0;
+const affichageTempsProgramme = document.getElementById('temps-programme');
 
 const boutonPause = document.getElementById('pause');
 boutonPause.onclick = basculerPause;
@@ -23,6 +29,9 @@ document.getElementById('annuler-edition').onclick = fermerEditeur;
 document.getElementById('ajouter-etape').onclick = () => ajouterEtape(blocs).focus();
 document.getElementById('ajouter-boucle').onclick = () => ajouterBoucle().focus();
 formulaire.onsubmit = enregistrerProgramme;
+boutonExporter.onclick = exporterProgrammes;
+boutonImporter.onclick = () => fichierProgrammes.click();
+fichierProgrammes.onchange = importerProgrammes;
 
 const choixTheme = document.getElementById('theme');
 try {
@@ -58,6 +67,7 @@ async function initialiserProgrammes() {
     }
     afficherMenu();
     boutonNouveau.disabled = false;
+    boutonImporter.disabled = false;
 }
 
 function lireProgrammesLocaux() {
@@ -71,13 +81,16 @@ function sauvegarderProgrammeLocal(programme) {
 }
 
 function dureeProgramme(programme) {
-    const total = programme.structure.reduce((secondes, bloc) => {
+    return programme.structure.reduce((secondes, bloc) => {
         if (bloc.type === 'unique') return secondes + bloc.duree;
         if (bloc.type === 'boucle') {
             return secondes + bloc.repetitions * bloc.etapes.reduce((somme, etape) => somme + etape.duree, 0);
         }
         return secondes;
     }, 0);
+}
+
+function formaterDuree(total) {
     const heures = Math.floor(total / 3600);
     const minutes = Math.floor(total / 60) % 60;
     const secondes = total % 60;
@@ -88,17 +101,25 @@ function dureeProgramme(programme) {
     ].filter(Boolean).join(' ');
 }
 
+function programmesDisponibles(locaux) {
+    const programmes = new Map(programmesPreenregistres.map(p => [p.id, p]));
+    locaux.forEach(p => {
+        if (p.supprime) programmes.delete(p.id);
+        else programmes.set(p.id, p);
+    });
+    return programmes;
+}
+
 function afficherMenu() {
     const liste = document.getElementById('liste-programmes');
-    const programmes = new Map(programmesPreenregistres.map(p => [p.id, p]));
+    let programmes;
     try {
-        lireProgrammesLocaux().forEach(p => {
-            if (p.supprime) programmes.delete(p.id);
-            else programmes.set(p.id, p);
-        });
+        programmes = programmesDisponibles(lireProgrammesLocaux());
     } catch {
+        programmes = programmesDisponibles([]);
         messageMenu.textContent = 'Les programmes enregistrés sur cet appareil sont inaccessibles.';
     }
+    boutonExporter.disabled = programmes.size === 0;
     liste.replaceChildren();
     programmes.forEach(p => {
         const carte = document.createElement('article');
@@ -107,7 +128,7 @@ function afficherMenu() {
         titre.textContent = p.titre;
         const duree = document.createElement('p');
         duree.className = 'duree-programme';
-        duree.textContent = `Durée totale · ${dureeProgramme(p)}`;
+        duree.textContent = `Durée totale · ${formaterDuree(dureeProgramme(p))}`;
         const actions = document.createElement('div');
         actions.className = 'actions';
         const demarrer = document.createElement('button');
@@ -129,6 +150,78 @@ function afficherMenu() {
         carte.append(titre, duree, actions);
         liste.append(carte);
     });
+}
+
+function exporterProgrammes() {
+    let programmes;
+    try {
+        programmes = [...programmesDisponibles(lireProgrammesLocaux()).values()];
+    } catch {
+        messageTransfert.textContent = 'Export impossible. Les programmes enregistrés sont inaccessibles.';
+        return;
+    }
+    const fichier = new Blob([JSON.stringify({ programmes }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(fichier);
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = 'exercice-timer-programmes.json';
+    document.body.append(lien);
+    lien.click();
+    lien.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    messageTransfert.textContent = 'Fichier JSON prêt à être enregistré ou partagé.';
+}
+
+function etapeImportable(etape) {
+    return typeof etape?.nom === 'string' && Boolean(etape.nom.trim())
+        && Number.isSafeInteger(etape.duree) && etape.duree > 0
+        && typeof etape.couleur === 'string' && /^#[0-9a-f]{6}$/i.test(etape.couleur);
+}
+
+function programmeImportable(programme) {
+    return typeof programme?.id === 'string' && Boolean(programme.id.trim()) && !programme.supprime
+        && typeof programme.titre === 'string' && Boolean(programme.titre.trim())
+        && Array.isArray(programme.structure) && programme.structure.length > 0
+        && programme.structure.every(bloc => {
+            if (bloc?.type === 'unique') return etapeImportable(bloc);
+            return bloc?.type === 'boucle'
+                && Number.isInteger(bloc.repetitions) && bloc.repetitions >= 1 && bloc.repetitions <= 1000
+                && Array.isArray(bloc.etapes) && bloc.etapes.length > 0 && bloc.etapes.every(etapeImportable);
+        })
+        && Number.isSafeInteger(dureeProgramme(programme));
+}
+
+async function importerProgrammes() {
+    const fichier = fichierProgrammes.files[0];
+    if (!fichier) return;
+    fichierProgrammes.value = '';
+    boutonImporter.disabled = true;
+    try {
+        const donnees = JSON.parse(await fichier.text());
+        const programmes = donnees?.programmes;
+        if (!Array.isArray(programmes) || !programmes.length || !programmes.every(programmeImportable)
+            || new Set(programmes.map(p => p.id)).size !== programmes.length) {
+            messageTransfert.textContent = 'Fichier invalide. Choisis un fichier JSON contenant des programmes valides et sans identifiants en double.';
+            return;
+        }
+        const locaux = new Map(lireProgrammesLocaux().map(p => [p.id, p]));
+        const existants = programmesDisponibles([...locaux.values()]);
+        const remplacements = programmes.filter(p => existants.has(p.id) && locaux.has(p.id)).length;
+        if (remplacements && !confirm(`L’import remplacera ${remplacements} programme(s) déjà enregistré(s) sur cet appareil. Continuer ?`)) {
+            messageTransfert.textContent = 'Import annulé.';
+            return;
+        }
+        programmes.forEach(p => locaux.set(p.id, p));
+        localStorage.setItem(cleProgrammes, JSON.stringify([...locaux.values()]));
+        afficherMenu();
+        messageTransfert.textContent = programmes.length === 1 ? '1 programme importé.' : `${programmes.length} programmes importés.`;
+    } catch (erreur) {
+        messageTransfert.textContent = erreur instanceof SyntaxError
+            ? 'Le fichier ne contient pas de JSON valide.'
+            : 'Import impossible. Vérifie que le fichier est lisible et que le stockage local est disponible.';
+    } finally {
+        boutonImporter.disabled = false;
+    }
 }
 
 function supprimerProgramme(programme) {
@@ -282,6 +375,8 @@ function preparerEtDemarrer(p) {
 
     fileAttente = [];
     indexActuel = 0;
+    tempsProgrammeRestant = dureeProgramme(p);
+    affichageTempsProgramme.textContent = formaterDuree(tempsProgrammeRestant);
 
     // Transformation de la structure complexe en liste simple
     p.structure.forEach(bloc => {
@@ -321,6 +416,10 @@ function executerEtape() {
     document.body.style.backgroundColor = etape.couleur;
     titre.innerText = etape.nom;
     infos.innerText = etape.cycleInfo || "";
+    const suivante = fileAttente[indexActuel + 1];
+    document.getElementById('etape-suivante').textContent = suivante
+        ? `Ensuite · ${suivante.nom}`
+        : 'Dernière étape';
 
     tempsRestant = etape.duree;
     
@@ -337,7 +436,9 @@ function lancerCompteARebours() {
 
     intervalle = setInterval(() => {
         tempsRestant--;
+        tempsProgrammeRestant--;
         display.innerText = tempsRestant;
+        affichageTempsProgramme.textContent = formaterDuree(tempsProgrammeRestant);
 
         // Mise à jour de la barre visuelle
         const pourcentage = (tempsRestant / tempsTotal) * 100;
