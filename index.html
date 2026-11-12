@@ -5,7 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timer Excercices</title>
     <style>
-        body { margin: 0; font-family: "DM Sans", system-ui, sans-serif; background: #f1f5f4; transition: background 0.5s; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; color: white; }
+        :root {
+            color-scheme: light;
+            --fond: #fff3dc;
+            --surface: #fffdf8;
+            --texte: #4a2518;
+            --accent: #ad3c15;
+            --sur-accent: #ffffff;
+            --danger: #9a2f20;
+            --bordure: color-mix(in srgb, var(--texte) 44%, var(--surface));
+        }
+        :root[data-theme="lagon"] {
+            --fond: #dcf6f4;
+            --surface: #f7fffe;
+            --texte: #103c46;
+            --accent: #006878;
+            --danger: #9c344b;
+        }
+        :root[data-theme="lavande"] {
+            --fond: #f1eafe;
+            --surface: #fefcff;
+            --texte: #32234b;
+            --accent: #6334aa;
+            --danger: #a12b60;
+        }
+        :root[data-theme="minuit"] {
+            color-scheme: dark;
+            --fond: #0b1327;
+            --surface: #172440;
+            --texte: #eaf1ff;
+            --accent: #a8c7ff;
+            --sur-accent: #111c36;
+            --danger: #ffaeba;
+        }
+        :root[data-theme="braise"] {
+            color-scheme: dark;
+            --fond: #251513;
+            --surface: #3b2320;
+            --texte: #fff0db;
+            --accent: #ffad65;
+            --sur-accent: #371b0e;
+            --danger: #ffabaa;
+        }
+        body { margin: 0; font-family: "DM Sans", system-ui, sans-serif; background: var(--fond); transition: background 0.5s; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; color: white; }
         #app { box-sizing: border-box; width: 100%; padding: 48px 16px 24px; }
         h1 { font-size: 3rem; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         #timer { font-size: 8rem; font-weight: bold; margin: 20px 0; }
@@ -13,28 +55,33 @@
         #commandes { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
         button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; background: white; color: #333; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .hidden { display: none; }
-        #menu, #editeur { max-width: 38rem; margin: 0 auto; color: #172b27; text-align: left; }
+        #menu, #editeur { max-width: 38rem; margin: 0 auto; color: var(--texte); text-align: left; }
         #menu h1, #editeur h1 { font-size: 2rem; margin: 0 0 20px; text-shadow: none; }
         #liste-programmes, #blocs, .etapes { display: grid; gap: 12px; }
-        .programme, .bloc { background: #fff; border: 1px solid #cbd9d6; border-radius: 14px; padding: 14px; }
-        .programme h2 { font-size: 1.1rem; margin: 0 0 10px; overflow-wrap: anywhere; }
+        .programme, .bloc { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; padding: 14px; }
+        .programme h2 { font-size: 1.1rem; margin: 0 0 4px; overflow-wrap: anywhere; }
+        .duree-programme { margin: 0; font-size: 0.9rem; }
         .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        #menu button, #editeur button { padding: 9px 14px; min-height: 44px; border-radius: 8px; font-size: 1rem; box-shadow: none; border: 1px solid #b6c8c4; color: #174238; }
-        #menu .principal, #editeur .principal { background: #174d40; border-color: #174d40; color: white; }
+        #menu button, #editeur button { padding: 9px 14px; min-height: 44px; border-radius: 8px; font-size: 1rem; box-shadow: none; background: var(--surface); border: 1px solid var(--bordure); color: var(--texte); }
+        #menu .principal, #editeur .principal { background: var(--accent); border-color: var(--accent); color: var(--sur-accent); }
         #menu .programme .principal { flex: 0 0 100%; min-height: 68px; font-size: 1.4rem; }
         #menu .programme button:not(.principal) { padding: 6px 10px; font-size: 0.85rem; }
-        #menu .danger { color: #852c20; border-color: #d8aaa3; }
+        #menu .danger { color: var(--danger); border-color: var(--bordure); }
+        .choix-theme { display: grid; gap: 5px; margin-top: 20px; width: fit-content; max-width: 100%; font-weight: 600; }
+        #theme { min-height: 44px; max-width: 100%; padding: 8px; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--bordure); border-radius: 8px; }
+        #message-theme:empty { display: none; }
         #nouveau-programme { margin-bottom: 16px; }
         #editeur label { display: grid; gap: 5px; font-weight: 600; min-width: 0; }
-        #editeur input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid #96ada7; border-radius: 7px; background: white; color: inherit; font: inherit; }
+        #editeur input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--bordure); border-radius: 7px; background: var(--surface); color: inherit; font: inherit; }
         #editeur input[type="color"] { padding: 4px; }
         #blocs { margin-top: 16px; }
         #editeur fieldset { min-width: 0; margin: 0; }
         #editeur legend { font-weight: 700; padding: 0 5px; }
+        #editeur button:disabled { opacity: 0.5; cursor: default; }
         .etapes { margin-top: 12px; }
-        .etapes .bloc { background: #f1f5f4; }
+        .etapes .bloc { background: var(--fond); }
         .parametres-etape { display: grid; gap: 8px; margin-top: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .message { color: #852c20; }
+        .message { color: var(--danger); }
     </style>
 </head>
 <body>
@@ -47,6 +94,16 @@
             <button id="nouveau-programme" class="principal" type="button" disabled>Nouveau programme</button>
             <p id="message-menu" class="message" role="status"></p>
             <div id="liste-programmes"></div>
+            <label class="choix-theme">Thème
+                <select id="theme">
+                    <option value="agrumes">Agrumes · clair</option>
+                    <option value="lagon">Lagon · clair</option>
+                    <option value="lavande">Lavande · clair</option>
+                    <option value="minuit">Minuit électrique · sombre</option>
+                    <option value="braise">Braise · sombre</option>
+                </select>
+            </label>
+            <p id="message-theme" class="message" role="status"></p>
         </div>
         <section id="editeur" class="hidden" aria-labelledby="titre-editeur">
             <h1 id="titre-editeur"></h1>
@@ -92,6 +149,8 @@
                 </label>
             </div>
             <div class="actions">
+                <button class="monter" type="button" aria-label="Monter l’étape">Monter</button>
+                <button class="descendre" type="button" aria-label="Descendre l’étape">Descendre</button>
                 <button class="supprimer" type="button">Retirer l’étape</button>
             </div>
         </fieldset>
@@ -104,6 +163,8 @@
             </label>
             <div class="etapes"></div>
             <div class="actions">
+                <button class="monter" type="button" aria-label="Monter la série">Monter</button>
+                <button class="descendre" type="button" aria-label="Descendre la série">Descendre</button>
                 <button class="ajouter" type="button">Ajouter une étape à la série</button>
                 <button class="supprimer-boucle" type="button">Retirer la série</button>
             </div>

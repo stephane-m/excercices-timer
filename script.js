@@ -1,4 +1,5 @@
 const cleProgrammes = 'exercice-timer.programmes';
+const cleTheme = 'exercice-timer.theme';
 let programmesPreenregistres = [];
 const menu = document.getElementById('menu');
 const editeur = document.getElementById('editeur');
@@ -22,6 +23,27 @@ document.getElementById('annuler-edition').onclick = fermerEditeur;
 document.getElementById('ajouter-etape').onclick = () => ajouterEtape(blocs).focus();
 document.getElementById('ajouter-boucle').onclick = () => ajouterBoucle().focus();
 formulaire.onsubmit = enregistrerProgramme;
+
+const choixTheme = document.getElementById('theme');
+try {
+    const themeSauvegarde = localStorage.getItem(cleTheme);
+    if (Array.from(choixTheme.options).some(option => option.value === themeSauvegarde)) {
+        choixTheme.value = themeSauvegarde;
+    }
+} catch {
+    // Le thème par défaut reste disponible si le stockage est bloqué.
+}
+document.documentElement.dataset.theme = choixTheme.value;
+choixTheme.onchange = () => {
+    document.documentElement.dataset.theme = choixTheme.value;
+    const message = document.getElementById('message-theme');
+    try {
+        localStorage.setItem(cleTheme, choixTheme.value);
+        message.textContent = '';
+    } catch {
+        message.textContent = 'Le thème est appliqué pour cette visite. Le navigateur a refusé de le mémoriser.';
+    }
+};
 
 initialiserProgrammes();
 
@@ -48,6 +70,24 @@ function sauvegarderProgrammeLocal(programme) {
     localStorage.setItem(cleProgrammes, JSON.stringify([...programmes.values()]));
 }
 
+function dureeProgramme(programme) {
+    const total = programme.structure.reduce((secondes, bloc) => {
+        if (bloc.type === 'unique') return secondes + bloc.duree;
+        if (bloc.type === 'boucle') {
+            return secondes + bloc.repetitions * bloc.etapes.reduce((somme, etape) => somme + etape.duree, 0);
+        }
+        return secondes;
+    }, 0);
+    const heures = Math.floor(total / 3600);
+    const minutes = Math.floor(total / 60) % 60;
+    const secondes = total % 60;
+    return [
+        heures ? `${heures} h` : '',
+        minutes ? `${minutes} min` : '',
+        secondes || !total ? `${secondes} s` : ''
+    ].filter(Boolean).join(' ');
+}
+
 function afficherMenu() {
     const liste = document.getElementById('liste-programmes');
     const programmes = new Map(programmesPreenregistres.map(p => [p.id, p]));
@@ -65,6 +105,9 @@ function afficherMenu() {
         carte.className = 'programme';
         const titre = document.createElement('h2');
         titre.textContent = p.titre;
+        const duree = document.createElement('p');
+        duree.className = 'duree-programme';
+        duree.textContent = `Durée totale · ${dureeProgramme(p)}`;
         const actions = document.createElement('div');
         actions.className = 'actions';
         const demarrer = document.createElement('button');
@@ -83,7 +126,7 @@ function afficherMenu() {
         supprimer.setAttribute('aria-label', `Supprimer le programme ${p.titre}`);
         supprimer.onclick = () => supprimerProgramme(p);
         actions.append(demarrer, modifier, supprimer);
-        carte.append(titre, actions);
+        carte.append(titre, duree, actions);
         liste.append(carte);
     });
 }
@@ -127,14 +170,41 @@ function fermerEditeur() {
     window.scrollTo(0, 0);
 }
 
+function actualiserBoutonsOrdre(conteneur) {
+    for (const bloc of conteneur.children) {
+        bloc.querySelector(':scope > .actions > .monter').disabled = !bloc.previousElementSibling;
+        bloc.querySelector(':scope > .actions > .descendre').disabled = !bloc.nextElementSibling;
+    }
+}
+
+function configurerBloc(bloc, conteneur, selecteurSuppression) {
+    const monter = bloc.querySelector(':scope > .actions > .monter');
+    const descendre = bloc.querySelector(':scope > .actions > .descendre');
+    monter.onclick = () => {
+        bloc.previousElementSibling.before(bloc);
+        actualiserBoutonsOrdre(conteneur);
+        (monter.disabled ? descendre : monter).focus();
+    };
+    descendre.onclick = () => {
+        bloc.nextElementSibling.after(bloc);
+        actualiserBoutonsOrdre(conteneur);
+        (descendre.disabled ? monter : descendre).focus();
+    };
+    bloc.querySelector(selecteurSuppression).onclick = () => {
+        bloc.remove();
+        actualiserBoutonsOrdre(conteneur);
+    };
+    conteneur.append(bloc);
+    actualiserBoutonsOrdre(conteneur);
+}
+
 function ajouterEtape(conteneur, etape = {}) {
     const bloc = document.getElementById('modele-etape').content.firstElementChild.cloneNode(true);
     const nom = bloc.querySelector('[name="nom"]');
     nom.value = etape.nom ?? '';
     bloc.querySelector('[name="duree"]').value = etape.duree ?? 30;
     bloc.querySelector('[name="couleur"]').value = etape.couleur ?? '#e67e22';
-    bloc.querySelector('.supprimer').onclick = () => bloc.remove();
-    conteneur.append(bloc);
+    configurerBloc(bloc, conteneur, '.supprimer');
     return nom;
 }
 
@@ -145,8 +215,7 @@ function ajouterBoucle(boucle = { repetitions: 2, etapes: [{}] }) {
     repetitions.value = boucle.repetitions;
     boucle.etapes.forEach(etape => ajouterEtape(etapes, etape));
     bloc.querySelector('.ajouter').onclick = () => ajouterEtape(etapes).focus();
-    bloc.querySelector('.supprimer-boucle').onclick = () => bloc.remove();
-    blocs.append(bloc);
+    configurerBloc(bloc, blocs, '.supprimer-boucle');
     return repetitions;
 }
 
