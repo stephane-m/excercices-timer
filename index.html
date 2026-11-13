@@ -58,14 +58,14 @@
         #commandes { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
         button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; background: white; color: #333; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .hidden { display: none; }
-        #menu, #editeur { max-width: 38rem; margin: 0 auto; color: var(--texte); text-align: left; }
-        #menu h1, #editeur h1 { font-size: 2rem; margin: 0 0 20px; text-shadow: none; }
+        #menu, #editeur, #parametres { max-width: 38rem; margin: 0 auto; color: var(--texte); text-align: left; }
+        #menu h1, #editeur h1, #parametres h1 { font-size: 2rem; margin: 0 0 20px; text-shadow: none; }
         #liste-programmes, #blocs, .etapes { display: grid; gap: 12px; }
         .programme, .bloc { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; padding: 14px; }
         .programme h2 { font-size: 1.1rem; margin: 0 0 4px; overflow-wrap: anywhere; }
         .duree-programme { margin: 0; font-size: 0.9rem; }
         .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        #menu button, #editeur button { padding: 9px 14px; min-height: 44px; border-radius: 8px; font-size: 1rem; box-shadow: none; background: var(--surface); border: 1px solid var(--bordure); color: var(--texte); }
+        #menu button, #editeur button, #parametres button { padding: 9px 14px; min-height: 44px; border-radius: 8px; font-size: 1rem; box-shadow: none; background: var(--surface); border: 1px solid var(--bordure); color: var(--texte); }
         #menu .principal, #editeur .principal { background: var(--accent); border-color: var(--accent); color: var(--sur-accent); }
         #menu .programme .principal { flex: 0 0 100%; min-height: 68px; font-size: 1.4rem; }
         #menu .programme button:not(.principal) { padding: 6px 10px; font-size: 0.85rem; }
@@ -105,6 +105,13 @@
             <p id="message-menu" class="message" role="status"></p>
             <div id="liste-programmes"></div>
             <div class="actions">
+                <button id="ouvrir-parametres" type="button">Paramètres</button>
+            </div>
+        </div>
+        <section id="parametres" class="hidden" aria-labelledby="titre-parametres">
+            <h1 id="titre-parametres" tabindex="-1">Paramètres</h1>
+            <button id="fermer-parametres" type="button">Retour à l’accueil</button>
+            <div class="actions">
                 <button id="exporter-programmes" type="button" disabled>Exporter les programmes</button>
                 <button id="importer-programmes" type="button" disabled>Importer des programmes</button>
                 <input id="fichier-programmes" type="file" accept=".json,application/json" hidden>
@@ -120,7 +127,7 @@
                 </select>
             </label>
             <p id="message-theme" class="message" role="status"></p>
-        </div>
+        </section>
         <section id="editeur" class="hidden" aria-labelledby="titre-editeur">
             <h1 id="titre-editeur"></h1>
             <form id="formulaire-programme">
