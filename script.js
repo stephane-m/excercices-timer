@@ -63,12 +63,65 @@ choixTheme.onchange = () => {
     const message = document.getElementById('message-theme');
     try {
         localStorage.setItem(cleTheme, choixTheme.value);
-        message.textContent = '';
+        effacerMessage(message);
     } catch {
-        message.textContent = 'Le thème est appliqué pour cette visite. Le navigateur a refusé de le mémoriser.';
+        afficherMessage(message, 'themeErreur');
     }
 };
 
+const cleLangue = 'exercice-timer.langue';
+const choixLangue = document.getElementById('langue');
+try {
+    if (localStorage.getItem(cleLangue) === 'en') choixLangue.value = 'en';
+} catch {
+    // Le français reste disponible lorsque le stockage est inaccessible.
+}
+
+function traduire(cle, valeurs = {}) {
+    const texte = traductions[cle][choixLangue.value === 'en' ? 1 : 0];
+    return texte.replace(/\{(\w+)\}/g, (_, nom) => valeurs[nom]);
+}
+
+const messagesActifs = new Map();
+
+function afficherMessage(element, cle, valeurs) {
+    messagesActifs.set(element, { cle, valeurs });
+    element.textContent = traduire(cle, valeurs);
+}
+
+function effacerMessage(element) {
+    messagesActifs.delete(element);
+    element.textContent = '';
+}
+
+function traduireInterface() {
+    for (const [element, { cle, valeurs }] of messagesActifs) {
+        element.textContent = traduire(cle, valeurs);
+    }
+    document.documentElement.lang = choixLangue.value;
+    for (const racine of [document, ...Array.from(document.querySelectorAll('template'), modele => modele.content)]) {
+        racine.querySelectorAll('[data-i18n]').forEach(element => {
+            element.textContent = traduire(element.dataset.i18n);
+        });
+        racine.querySelectorAll('[data-i18n-label]').forEach(element => {
+            element.setAttribute('aria-label', traduire(element.dataset.i18nLabel));
+        });
+    }
+}
+
+choixLangue.onchange = () => {
+    traduireInterface();
+    afficherMenu();
+    const message = document.getElementById('message-langue');
+    try {
+        localStorage.setItem(cleLangue, choixLangue.value);
+        effacerMessage(message);
+    } catch {
+        afficherMessage(message, 'langueErreur');
+    }
+};
+
+traduireInterface();
 initialiserProgrammes();
 
 async function initialiserProgrammes() {
@@ -78,7 +131,7 @@ async function initialiserProgrammes() {
         const donnees = await reponse.json();
         programmesPreenregistres = donnees.programmes;
     } catch {
-        messageMenu.textContent = 'Les programmes préenregistrés sont indisponibles.';
+        afficherMessage(messageMenu, 'programmesErreur');
     }
     afficherMenu();
     boutonNouveau.disabled = false;
@@ -144,7 +197,7 @@ function afficherMenu(focusOrdre) {
         programmes = programmesDisponibles(lireProgrammesLocaux());
     } catch {
         programmes = programmesDisponibles([]);
-        messageMenu.textContent = 'Les programmes enregistrés sur cet appareil sont inaccessibles.';
+        afficherMessage(messageMenu, 'stockageErreur');
     }
     boutonExporter.disabled = programmes.size === 0;
     liste.replaceChildren();
@@ -160,23 +213,23 @@ function afficherMenu(focusOrdre) {
         entete.append(titre);
         const duree = document.createElement('p');
         duree.className = 'duree-programme';
-        duree.textContent = `Durée totale · ${formaterDuree(dureeProgramme(p))}`;
+        duree.textContent = traduire('dureeTotale', { duree: formaterDuree(dureeProgramme(p)) });
         const actions = document.createElement('div');
         actions.className = 'actions';
         const demarrer = document.createElement('button');
         demarrer.type = 'button';
         demarrer.className = 'principal';
-        demarrer.textContent = 'Démarrer';
+        demarrer.textContent = traduire('demarrer');
         demarrer.onclick = () => preparerEtDemarrer(p);
         const modifier = document.createElement('button');
         modifier.type = 'button';
-        modifier.textContent = 'Modifier';
+        modifier.textContent = traduire('modifier');
         modifier.onclick = () => ouvrirEditeur(p);
         const supprimer = document.createElement('button');
         supprimer.type = 'button';
         supprimer.className = 'danger';
-        supprimer.textContent = 'Supprimer';
-        supprimer.setAttribute('aria-label', `Supprimer le programme ${p.titre}`);
+        supprimer.textContent = traduire('supprimer');
+        supprimer.setAttribute('aria-label', traduire('supprimerProgramme', { nom: p.titre }));
         supprimer.onclick = () => supprimerProgramme(p);
         actions.append(demarrer, modifier, supprimer);
         if (ordre.length > 1) {
@@ -184,8 +237,8 @@ function afficherMenu(focusOrdre) {
             poignee.type = 'button';
             poignee.className = 'poignee-programme';
             poignee.textContent = '↕';
-            poignee.setAttribute('aria-label', `Déplacer ${p.titre} · position ${index + 1} sur ${ordre.length}`);
-            poignee.setAttribute('aria-description', 'Fais glisser la poignée ou utilise les flèches haut et bas.');
+            poignee.setAttribute('aria-label', traduire('deplacer', { nom: p.titre, index: index + 1, total: ordre.length }));
+            poignee.setAttribute('aria-description', traduire('deplacerAide'));
             configurerPoignee(poignee, carte, liste, ordre, index);
             entete.append(poignee);
         }
@@ -266,10 +319,10 @@ function deplacerProgramme(ordre, index, destination, garderFocus = false) {
     try {
         localStorage.setItem(cleOrdreProgrammes, JSON.stringify(nouvelOrdre));
     } catch {
-        messageMenu.textContent = 'Impossible d’enregistrer le nouvel ordre des programmes.';
+        afficherMessage(messageMenu, 'ordreErreur');
         return;
     }
-    messageMenu.textContent = '';
+    effacerMessage(messageMenu);
     afficherMenu(garderFocus ? id : undefined);
 }
 
@@ -278,7 +331,7 @@ function exporterProgrammes() {
     try {
         programmes = [...programmesDisponibles(lireProgrammesLocaux()).values()];
     } catch {
-        messageTransfert.textContent = 'Export impossible. Les programmes enregistrés sont inaccessibles.';
+        afficherMessage(messageTransfert, 'exportErreur');
         return;
     }
     const fichier = new Blob([JSON.stringify({ programmes }, null, 2)], { type: 'application/json' });
@@ -290,7 +343,7 @@ function exporterProgrammes() {
     lien.click();
     lien.remove();
     setTimeout(() => URL.revokeObjectURL(url), 30000);
-    messageTransfert.textContent = 'Fichier JSON prêt à être enregistré ou partagé.';
+    afficherMessage(messageTransfert, 'exportPret');
 }
 
 function etapeImportable(etape) {
@@ -322,49 +375,47 @@ async function importerProgrammes() {
         const programmes = donnees?.programmes;
         if (!Array.isArray(programmes) || !programmes.length || !programmes.every(programmeImportable)
             || new Set(programmes.map(p => p.id)).size !== programmes.length) {
-            messageTransfert.textContent = 'Fichier invalide. Choisis un fichier JSON contenant des programmes valides et sans identifiants en double.';
+            afficherMessage(messageTransfert, 'importInvalide');
             return;
         }
         const locaux = new Map(lireProgrammesLocaux().map(p => [p.id, p]));
         const existants = programmesDisponibles([...locaux.values()]);
         const remplacements = programmes.filter(p => existants.has(p.id) && locaux.has(p.id)).length;
-        if (remplacements && !confirm(`L’import remplacera ${remplacements} programme(s) déjà enregistré(s) sur cet appareil. Continuer ?`)) {
-            messageTransfert.textContent = 'Import annulé.';
+        if (remplacements && !confirm(traduire('confirmerImport', { nombre: remplacements }))) {
+            afficherMessage(messageTransfert, 'importAnnule');
             return;
         }
         programmes.forEach(p => locaux.set(p.id, p));
         localStorage.setItem(cleProgrammes, JSON.stringify([...locaux.values()]));
         afficherMenu();
-        messageTransfert.textContent = programmes.length === 1 ? '1 programme importé.' : `${programmes.length} programmes importés.`;
+        afficherMessage(messageTransfert, programmes.length === 1 ? 'importUn' : 'importPlusieurs', { nombre: programmes.length });
     } catch (erreur) {
-        messageTransfert.textContent = erreur instanceof SyntaxError
-            ? 'Le fichier ne contient pas de JSON valide.'
-            : 'Import impossible. Vérifie que le fichier est lisible et que le stockage local est disponible.';
+        afficherMessage(messageTransfert, erreur instanceof SyntaxError ? 'jsonInvalide' : 'importErreur');
     } finally {
         boutonImporter.disabled = false;
     }
 }
 
 function supprimerProgramme(programme) {
-    if (!confirm(`Supprimer le programme « ${programme.titre} » ?`)) return;
+    if (!confirm(traduire('confirmerSuppression', { nom: programme.titre }))) return;
     try {
         // L’identifiant seul suffit à empêcher un programme fourni de réapparaître.
         sauvegarderProgrammeLocal({ id: programme.id, supprime: true });
     } catch {
-        messageMenu.textContent = 'Suppression impossible. Vérifie que le navigateur autorise le stockage local.';
+        afficherMessage(messageMenu, 'suppressionErreur');
         return;
     }
-    messageMenu.textContent = '';
+    effacerMessage(messageMenu);
     afficherMenu();
     boutonNouveau.focus();
 }
 
 function ouvrirEditeur(programme = null) {
     programmeEdite = programme;
-    document.getElementById('titre-editeur').textContent = programme ? 'Modifier le programme' : 'Nouveau programme';
+    document.getElementById('titre-editeur').textContent = programme ? traduire('modifierProgramme') : traduire('nouveau');
     formulaire.elements.titre.value = programme?.titre ?? '';
     blocs.replaceChildren();
-    messageEditeur.textContent = '';
+    effacerMessage(messageEditeur);
     if (programme) {
         programme.structure.forEach(bloc => {
             if (bloc.type === 'boucle') ajouterBoucle(bloc);
@@ -456,14 +507,14 @@ function enregistrerProgramme(evenement) {
     if (!titre || !structure.length || structure.some(bloc =>
         bloc.type === 'boucle' ? !bloc.etapes.length || bloc.etapes.some(etape => !etape.nom) : !bloc.nom
     )) {
-        messageEditeur.textContent = 'Donne un nom au programme et à chaque étape, et ajoute au moins une étape par programme et par série.';
+        afficherMessage(messageEditeur, 'formulaireInvalide');
         return;
     }
     try {
         const id = programmeEdite?.id ?? `perso-${Array.from(crypto.getRandomValues(new Uint32Array(4))).join('-')}`;
         sauvegarderProgrammeLocal({ id, titre, structure });
     } catch {
-        messageEditeur.textContent = 'Enregistrement impossible. Vérifie que le navigateur autorise le stockage local.';
+        afficherMessage(messageEditeur, 'enregistrementErreur');
         return;
     }
     afficherMenu();
@@ -506,7 +557,7 @@ function preparerEtDemarrer(p) {
         } else if (bloc.type === "boucle") {
             for (let i = 0; i < bloc.repetitions; i++) {
                 bloc.etapes.forEach(e => {
-                    fileAttente.push({ ...e, cycleInfo: `Série ${i + 1}/${bloc.repetitions}` });
+                    fileAttente.push({ ...e, cycleInfo: traduire('serieCompteur', { index: i + 1, total: bloc.repetitions }) });
                 });
             }
         }
@@ -519,7 +570,7 @@ function preparerEtDemarrer(p) {
 
 function executerEtape() {
     if (indexActuel >= fileAttente.length) {
-        alert("Séance terminée ! Bravo !");
+        alert(traduire('fin'));
         retournerAccueil();
         return;
     }
@@ -539,8 +590,8 @@ function executerEtape() {
     infos.innerText = etape.cycleInfo || "";
     const suivante = fileAttente[indexActuel + 1];
     document.getElementById('etape-suivante').textContent = suivante
-        ? `Ensuite · ${suivante.nom}`
-        : 'Dernière étape';
+        ? traduire('suivante', { nom: suivante.nom })
+        : traduire('derniere');
 
     tempsRestant = etape.duree;
     
@@ -586,10 +637,10 @@ function arreterCompteARebours() {
 function basculerPause() {
     if (intervalle === null) {
         lancerCompteARebours();
-        boutonPause.innerText = "Pause";
+        boutonPause.innerText = traduire('pause');
     } else {
         arreterCompteARebours();
-        boutonPause.innerText = "Reprendre";
+        boutonPause.innerText = traduire('reprendre');
     }
 }
 

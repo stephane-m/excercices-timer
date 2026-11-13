@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timer Excercices</title>
+    <title data-i18n="titre">Minuteur d’exercices</title>
     <style>
         :root {
             color-scheme: light;
@@ -77,8 +77,8 @@
         .programme.depot-apres { box-shadow: 0 4px var(--accent); }
         #menu .danger { color: var(--danger); border-color: var(--bordure); }
         .choix-theme { display: grid; gap: 5px; margin-top: 20px; width: fit-content; max-width: 100%; font-weight: 600; }
-        #theme { min-height: 44px; max-width: 100%; padding: 8px; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--bordure); border-radius: 8px; }
-        #message-theme:empty { display: none; }
+        #theme, #langue { min-height: 44px; max-width: 100%; padding: 8px; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--bordure); border-radius: 8px; }
+        #message-theme:empty, #message-langue:empty { display: none; }
         #message-transfert:empty { display: none; }
         #nouveau-programme { margin-bottom: 16px; }
         #editeur label { display: grid; gap: 5px; font-weight: 600; min-width: 0; }
@@ -100,103 +100,111 @@
     </div>
     <div id="app">
         <div id="menu">
-            <h1>Mes programmes</h1>
-            <button id="nouveau-programme" class="principal" type="button" disabled>Nouveau programme</button>
+            <h1 data-i18n="programmes">Mes programmes</h1>
+            <button id="nouveau-programme" class="principal" type="button" disabled data-i18n="nouveau">Nouveau programme</button>
             <p id="message-menu" class="message" role="status"></p>
             <div id="liste-programmes"></div>
             <div class="actions">
-                <button id="ouvrir-parametres" type="button">Paramètres</button>
+                <button id="ouvrir-parametres" type="button" data-i18n="parametres">Paramètres</button>
             </div>
         </div>
         <section id="parametres" class="hidden" aria-labelledby="titre-parametres">
-            <h1 id="titre-parametres" tabindex="-1">Paramètres</h1>
-            <button id="fermer-parametres" type="button">Retour à l’accueil</button>
+            <h1 id="titre-parametres" tabindex="-1" data-i18n="parametres">Paramètres</h1>
+            <button id="fermer-parametres" type="button" data-i18n="accueil">Retour à l’accueil</button>
             <div class="actions">
-                <button id="exporter-programmes" type="button" disabled>Exporter les programmes</button>
-                <button id="importer-programmes" type="button" disabled>Importer des programmes</button>
+                <button id="exporter-programmes" type="button" disabled data-i18n="exporter">Exporter les programmes</button>
+                <button id="importer-programmes" type="button" disabled data-i18n="importer">Importer des programmes</button>
                 <input id="fichier-programmes" type="file" accept=".json,application/json" hidden>
             </div>
             <p id="message-transfert" role="status"></p>
-            <label class="choix-theme">Thème
+            <label class="choix-theme"><span data-i18n="theme">Thème</span>
                 <select id="theme">
-                    <option value="agrumes">Agrumes · clair</option>
-                    <option value="lagon">Lagon · clair</option>
-                    <option value="lavande">Lavande · clair</option>
-                    <option value="minuit">Minuit électrique · sombre</option>
-                    <option value="braise">Braise · sombre</option>
+                    <option value="agrumes" data-i18n="agrumes">Agrumes · clair</option>
+                    <option value="lagon" data-i18n="lagon">Lagon · clair</option>
+                    <option value="lavande" data-i18n="lavande">Lavande · clair</option>
+                    <option value="minuit" data-i18n="minuit">Minuit électrique · sombre</option>
+                    <option value="braise" data-i18n="braise">Braise · sombre</option>
                 </select>
             </label>
             <p id="message-theme" class="message" role="status"></p>
+            <label class="choix-theme"><span data-i18n="langue">Langue</span>
+                <select id="langue">
+                    <option value="fr" lang="fr">Français</option>
+                    <option value="en" lang="en">English</option>
+                </select>
+            </label>
+            <p id="message-langue" class="message" role="status"></p>
         </section>
         <section id="editeur" class="hidden" aria-labelledby="titre-editeur">
             <h1 id="titre-editeur"></h1>
             <form id="formulaire-programme">
-                <label>Nom du programme
+                <label><span data-i18n="nomProgramme">Nom du programme</span>
                     <input name="titre" required>
                 </label>
                 <div id="blocs"></div>
                 <div class="actions">
-                    <button id="ajouter-etape" type="button">Ajouter une étape</button>
-                    <button id="ajouter-boucle" type="button">Ajouter une série</button>
+                    <button id="ajouter-etape" type="button" data-i18n="ajouterEtape">Ajouter une étape</button>
+                    <button id="ajouter-boucle" type="button" data-i18n="ajouterSerie">Ajouter une série</button>
                 </div>
                 <p id="message-editeur" class="message" role="alert"></p>
                 <div class="actions">
-                    <button class="principal" type="submit">Enregistrer</button>
-                    <button id="annuler-edition" type="button">Annuler</button>
+                    <button class="principal" type="submit" data-i18n="enregistrer">Enregistrer</button>
+                    <button id="annuler-edition" type="button" data-i18n="annuler">Annuler</button>
                 </div>
             </form>
         </section>
         
         <div id="entrainement" class="hidden">
-            <h1 id="titre-etape">Prêt ?</h1>
+            <h1 id="titre-etape" data-i18n="pret">Prêt ?</h1>
             <div id="timer">00</div>
             <div id="infos"></div>
             <div class="infos-seance">
                 <p id="etape-suivante" aria-live="polite"></p>
-                <p>Temps restant de la séance <strong id="temps-programme"></strong></p>
+                <p><span data-i18n="restant">Temps restant de la séance</span> <strong id="temps-programme"></strong></p>
             </div>
             <div id="commandes">
-                <button id="pause" type="button">Pause</button>
-                <button id="accueil" type="button">Retour à l’accueil</button>
+                <button id="pause" type="button" data-i18n="pause">Pause</button>
+                <button id="accueil" type="button" data-i18n="accueil">Retour à l’accueil</button>
             </div>
         </div>
     </div>
     <template id="modele-etape">
         <fieldset class="bloc etape">
-            <legend>Étape</legend>
-            <label>Nom de l’étape
+            <legend data-i18n="etape">Étape</legend>
+            <label><span data-i18n="nomEtape">Nom de l’étape</span>
                 <input name="nom" required>
             </label>
             <div class="parametres-etape">
-                <label>Durée (secondes)
+                <label><span data-i18n="duree">Durée (secondes)</span>
                     <input name="duree" type="number" min="1" step="1" required>
                 </label>
-                <label>Couleur
+                <label><span data-i18n="couleur">Couleur</span>
                     <input name="couleur" type="color">
                 </label>
             </div>
             <div class="actions">
-                <button class="monter" type="button" aria-label="Monter l’étape">Monter</button>
-                <button class="descendre" type="button" aria-label="Descendre l’étape">Descendre</button>
-                <button class="supprimer" type="button">Retirer l’étape</button>
+                <button class="monter" type="button" aria-label="Monter l’étape" data-i18n-label="monterEtape" data-i18n="monter">Monter</button>
+                <button class="descendre" type="button" aria-label="Descendre l’étape" data-i18n-label="descendreEtape" data-i18n="descendre">Descendre</button>
+                <button class="supprimer" type="button" data-i18n="retirerEtape">Retirer l’étape</button>
             </div>
         </fieldset>
     </template>
     <template id="modele-boucle">
         <fieldset class="bloc boucle">
-            <legend>Série répétée</legend>
-            <label>Nombre de répétitions
+            <legend data-i18n="serie">Série répétée</legend>
+            <label><span data-i18n="repetitions">Nombre de répétitions</span>
                 <input name="repetitions" type="number" min="1" max="1000" step="1" required>
             </label>
             <div class="etapes"></div>
             <div class="actions">
-                <button class="monter" type="button" aria-label="Monter la série">Monter</button>
-                <button class="descendre" type="button" aria-label="Descendre la série">Descendre</button>
-                <button class="ajouter" type="button">Ajouter une étape à la série</button>
-                <button class="supprimer-boucle" type="button">Retirer la série</button>
+                <button class="monter" type="button" aria-label="Monter la série" data-i18n-label="monterSerie" data-i18n="monter">Monter</button>
+                <button class="descendre" type="button" aria-label="Descendre la série" data-i18n-label="descendreSerie" data-i18n="descendre">Descendre</button>
+                <button class="ajouter" type="button" data-i18n="ajouterEtapeSerie">Ajouter une étape à la série</button>
+                <button class="supprimer-boucle" type="button" data-i18n="retirerSerie">Retirer la série</button>
             </div>
         </fieldset>
     </template>
+    <script src="traductions.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # Exercise Timer
 
-Exercise Timer is a mobile-friendly web app for building and running timed routines for stretching, workouts, and other exercises. The interface is in French.
+Exercise Timer is a mobile-friendly web app for building and running timed routines for stretching, workouts, and other exercises. Choose French or English in **Settings**. Program and step names stay in their original language.
 
 ## Access the app online
 
