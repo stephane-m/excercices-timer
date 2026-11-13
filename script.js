@@ -3,8 +3,6 @@ const cleOrdreProgrammes = 'exercice-timer.ordre-programmes';
 const cleTheme = 'exercice-timer.theme';
 let programmesPreenregistres = [];
 const menu = document.getElementById('menu');
-const parametres = document.getElementById('parametres');
-const boutonParametres = document.getElementById('ouvrir-parametres');
 const editeur = document.getElementById('editeur');
 const formulaire = document.getElementById('formulaire-programme');
 const blocs = document.getElementById('blocs');
@@ -28,18 +26,6 @@ boutonPause.onclick = basculerPause;
 document.getElementById('accueil').onclick = retournerAccueil;
 
 boutonNouveau.onclick = () => ouvrirEditeur();
-boutonParametres.onclick = () => {
-    menu.classList.add('hidden');
-    parametres.classList.remove('hidden');
-    window.scrollTo(0, 0);
-    document.getElementById('titre-parametres').focus();
-};
-document.getElementById('fermer-parametres').onclick = () => {
-    parametres.classList.add('hidden');
-    menu.classList.remove('hidden');
-    window.scrollTo(0, 0);
-    boutonParametres.focus();
-};
 document.getElementById('annuler-edition').onclick = fermerEditeur;
 document.getElementById('ajouter-etape').onclick = () => ajouterEtape(blocs).focus();
 document.getElementById('ajouter-boucle').onclick = () => ajouterBoucle().focus();
